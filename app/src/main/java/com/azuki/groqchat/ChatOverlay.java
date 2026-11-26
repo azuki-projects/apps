@@ -60,7 +60,7 @@ public class ChatOverlay {
         params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
                 Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT);
         params.gravity = Gravity.TOP | Gravity.LEFT;
         params.x = prefs.getInt("x", 24);
@@ -194,7 +194,6 @@ public class ChatOverlay {
         composer.setText("");
         addHistory("user", text);
         addMessage("user", text);
-        addHistory("assistant", ""); // reserve assistant slot
         busy = true;
         status.setText("Thinking...");
         final TextView waiting = label("Thinking…", 13, MUTED);
@@ -206,7 +205,6 @@ public class ChatOverlay {
             main.post(() -> {
                 busy = false;
                 messages.removeView(waiting);
-                if (history.size() > 0) history.remove(history.size() - 1);
                 addHistory("assistant", answer);
                 addMessage("assistant", answer);
                 status.setText(answer.startsWith("Request failed:") ? "Request error" : "Ready · Groq API");
@@ -272,7 +270,7 @@ public class ChatOverlay {
         input.setHint("gsk_...");
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         input.setText(prefs.getString("api_key", ""));
-        new AlertDialog.Builder(context, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+        AlertDialog dialog = new AlertDialog.Builder(context, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
                 .setTitle("Groq API key")
                 .setMessage("Your key is stored locally on this device.")
                 .setView(input)
@@ -285,7 +283,13 @@ public class ChatOverlay {
                     prefs.edit().remove("api_key").apply();
                     if (status != null) status.setText("API key cleared");
                 })
-                .setNegativeButton("Cancel", null).show();
+                .setNegativeButton("Cancel", null).create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setType(Build.VERSION.SDK_INT >= 26
+                    ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                    : WindowManager.LayoutParams.TYPE_PHONE);
+        }
+        dialog.show();
     }
 
     private boolean drag(View view, MotionEvent event, boolean isBubble) {
