@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace "com.azuki.calculatorfloat"
+    namespace "com.azuki.groqchat"
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.azuki.calculatorfloat"
+        applicationId "com.azuki.groqchat"
         minSdk 23
         targetSdk 28
         versionCode 1
